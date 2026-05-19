@@ -20,8 +20,8 @@ else:
         # Read the file. Adjust 'sep' if your file uses tabs ('\t') or semicolons (';')
         df = pd.read_csv(FILE_PATH, sep=',', engine='python')
         
-        with st.expander("Preview Data"):
-            st.dataframe(df.head())
+        with st.expander("Data"):
+            st.dataframe(df)
             
         # Define the required columns
         required_columns = ['Target Name', 'latitude', 'longitude', 'count_GT200_soundings', 'count_all', 'SAM_success_rate']
