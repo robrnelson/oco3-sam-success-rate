@@ -55,8 +55,8 @@ else:
                 color="ratio",
                 hover_name="Target Name",
                 hover_data={
-                    "latitude": False, 
-                    "longitude": False,
+                    "latitude": True, 
+                    "longitude": True,
                     "count_GT200_soundings": True,
                     "count_all": True,
                     "ratio": True
