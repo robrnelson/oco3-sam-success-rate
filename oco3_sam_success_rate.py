@@ -47,7 +47,7 @@ else:
                 df,
                 lat="latitude",
                 lon="longitude",
-                color="ratio",
+                color="SAM Success Rate",
                 hover_name="Target Name",
                 hover_data={
                     "latitude": ':.2f', 
@@ -58,13 +58,17 @@ else:
                 },
                 color_continuous_scale=px.colors.sequential.Viridis,
                 range_color=[0, 1], # Locks the color scale from 0 to 1
-                zoom=0,
+                zoom=1,
                 center={"lat": 0, "lon": 0},
                 mapbox_style='carto-positron',
-                title="SAM Locations Colored by Success Rate"
+                title="SAM Locations Colored by Success Rate (N converged retrievals > 200)"
             )
             
-            fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+            #fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+            fig.update_layout(
+              margin={"r":0,"t":40,"l":0,"b":0},
+              height=800  # <--- Set the height in pixels (adjust this number as needed)
+            )
             #st.plotly_chart(fig, use_container_width=True)
             st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
