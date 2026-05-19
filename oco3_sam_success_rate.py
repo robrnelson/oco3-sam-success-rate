@@ -47,7 +47,7 @@ else:
                 df,
                 lat="latitude",
                 lon="longitude",
-                color="SAM Success Rate",
+                color="ratio",
                 hover_name="Target Name",
                 hover_data={
                     "latitude": ':.2f', 
@@ -60,6 +60,7 @@ else:
                 range_color=[0, 1], # Locks the color scale from 0 to 1
                 zoom=1,
                 center={"lat": 0, "lon": 0},
+                labels={"ratio": "SAM Success Rate"},
                 mapbox_style='carto-positron',
                 title="SAM Locations Colored by Success Rate (N converged retrievals > 200)"
             )
