@@ -90,8 +90,7 @@ else:
               height=800  
             )
 
-            #fig.update_traces(marker={"size": 10})
-            fig.update_traces(marker={"size": 10, "line": {"color": "black", "width": 1}})
+            fig.update_traces(marker={"size": 12})
 
             # Render plot
             st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
