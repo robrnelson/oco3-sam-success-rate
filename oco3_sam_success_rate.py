@@ -36,7 +36,7 @@ else:
         else:
             active_df = df_sif
             #active_colorscale = px.colors.sequential.Greens
-            active_colorscale = px.colors.sequential.YlGl
+            active_colorscale = px.colors.sequential.YlGr
             active_title = "SAM Locations Colored by Success Rate (N 'Best Quality' SIF retrievals > 200)"
 
         # Display the data for the currently selected dataset
