@@ -61,7 +61,7 @@ else:
                 zoom=1,
                 center={"lat": 0, "lon": 0},
                 mapbox_style='carto-positron',
-                title="SAM Locations Colored by Success Rate (N converged retrievals > 200)"
+                title="SAM Locations Colored by Success Rate (N converged CO2 retrievals > 200)"
             )
             
             #fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
