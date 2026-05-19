@@ -24,7 +24,7 @@ else:
             st.dataframe(df.head())
             
         # Define the required columns
-        required_columns = ['Target Name', 'latitude', 'longitude', 'count_GT200_soundings', 'count_all', 'ratio']
+        required_columns = ['Target Name', 'latitude', 'longitude', 'count_GT200_soundings', 'count_all', 'SAM_success_rate']
         
         # Check for missing columns
         missing_columns = [col for col in required_columns if col not in df.columns]
@@ -35,10 +35,10 @@ else:
             # Ensure proper data types
             df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
             df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
-            df['ratio'] = pd.to_numeric(df['ratio'], errors='coerce')
+            df['SAM_success_rate'] = pd.to_numeric(df['SAM_success_rate'], errors='coerce')
             
             # Drop rows with invalid coordinates or ratio
-            df = df.dropna(subset=['latitude', 'longitude', 'ratio'])
+            df = df.dropna(subset=['latitude', 'longitude', 'SAM_success_rate'])
             
             st.subheader("Interactive Map")
 
@@ -47,20 +47,19 @@ else:
                 df,
                 lat="latitude",
                 lon="longitude",
-                color="ratio",
+                color="SAM_success_rate",
                 hover_name="Target Name",
                 hover_data={
                     "latitude": ':.2f', 
                     "longitude": ':.2f',
                     "count_GT200_soundings": ':.0f',
                     "count_all": ':.0f',
-                    "ratio": ':.2f'
+                    "SAM_success_rate": ':.2f'
                 },
                 color_continuous_scale=px.colors.sequential.Viridis,
                 range_color=[0, 1], # Locks the color scale from 0 to 1
                 zoom=1,
                 center={"lat": 0, "lon": 0},
-                labels={"ratio": "SAM Success Rate"},
                 mapbox_style='carto-positron',
                 title="SAM Locations Colored by Success Rate (N converged retrievals > 200)"
             )
@@ -70,6 +69,9 @@ else:
               margin={"r":0,"t":40,"l":0,"b":0},
               height=800  # <--- Set the height in pixels (adjust this number as needed)
             )
+
+            fig.update_traces(marker={"size": 10})
+
             #st.plotly_chart(fig, use_container_width=True)
             st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
