@@ -40,12 +40,7 @@ else:
             # Drop rows with invalid coordinates or ratio
             df = df.dropna(subset=['latitude', 'longitude', 'ratio'])
             
-            # Map style selector
             st.subheader("Interactive Map")
-            map_style = st.selectbox(
-                "Select Map Style", 
-                ["carto-positron", "open-street-map", "carto-darkmatter"]
-            )
 
             # Generate Map
             fig = px.scatter_mapbox(
@@ -55,21 +50,23 @@ else:
                 color="ratio",
                 hover_name="Target Name",
                 hover_data={
-                    "latitude": True, 
-                    "longitude": True,
-                    "count_GT200_soundings": True,
-                    "count_all": True,
-                    "ratio": True
+                    "latitude": ':.2f', 
+                    "longitude": ':.2f',
+                    "count_GT200_soundings": ':.0f',
+                    "count_all": ':.0f',
+                    "ratio": ':.2f'
                 },
-                color_continuous_scale=px.colors.sequential.Inferno,
+                color_continuous_scale=px.colors.sequential.Viridis,
                 range_color=[0, 1], # Locks the color scale from 0 to 1
-                zoom=3,
-                mapbox_style=map_style,
+                zoom=0,
+                center={"lat": 0, "lon": 0},
+                mapbox_style='carto-positron',
                 title="SAM Locations Colored by Success Rate"
             )
             
             fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
-            st.plotly_chart(fig, use_container_width=True)
+            #st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
     except pd.errors.ParserError:
         st.error("Error parsing the file. Please check if it's correctly formatted (e.g., comma-separated).")
