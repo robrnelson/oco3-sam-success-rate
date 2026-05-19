@@ -1,4 +1,4 @@
-Target Name,latitude,longitude,count_GT200_soundings,count_all,ratio
+Target Name,latitude,longitude,count_GT200_soundings,count_all,SAM_success_rate
 Auckland_NewZealand,-36.837498,174.769989,37.0,64.0,0.578125
 Dakar_Senegal,14.75,-17.2,32.0,46.0,0.6956521739130435
 DaresSalaam_Tanzania,-6.840556,39.245556,34.0,44.0,0.7727272727272727
