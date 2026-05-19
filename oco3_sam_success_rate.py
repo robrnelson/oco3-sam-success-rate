@@ -4,47 +4,66 @@ import plotly.express as px
 import os
 
 # --- Configuration ---
-# Hard-code your file path here. 
-# If it's in the same folder as app.py, just use the file name.
 FILE_PATH = "OCO3_SAM_GT200_ratios.txt" 
+SIF_FILE_PATH = "OCO3_SAM_GT200_SIF_ratios.txt" 
 # ---------------------
 
 st.set_page_config(page_title="OCO-3 SAM Success Rate Map", layout="wide")
 st.title("OCO-3 SAM Success Rate Map Viewer")
 
-# Check if the hard-coded file actually exists
-if not os.path.exists(FILE_PATH):
-    st.error(f"File not found: `{FILE_PATH}`. Please ensure the file is in the correct location.")
+# Check if both hard-coded files actually exist
+if not os.path.exists(FILE_PATH) or not os.path.exists(SIF_FILE_PATH):
+    st.error(f"Missing files. Please ensure both `{FILE_PATH}` and `{SIF_FILE_PATH}` are in the correct location.")
 else:
     try:
-        # Read the file. Adjust 'sep' if your file uses tabs ('\t') or semicolons (';')
-        df = pd.read_csv(FILE_PATH, sep=',', engine='python')
+        # Read the files
+        df_co2 = pd.read_csv(FILE_PATH, sep=',', engine='python')
+        df_sif = pd.read_csv(SIF_FILE_PATH, sep=',', engine='python')
         
-        with st.expander("Data"):
-            st.dataframe(df)
+        # --- UI Toggle ---
+        # Let the user choose which dataset to view
+        dataset_choice = st.radio(
+            "Select Variable to Display:", 
+            options=["CO2", "SIF"], 
+            horizontal=True
+        )
+        
+        # Set variables based on the user's choice
+        if dataset_choice == "CO2":
+            active_df = df_co2
+            active_colorscale = px.colors.sequential.Viridis
+            active_title = "SAM Locations Colored by Success Rate (N converged CO2 retrievals > 200)"
+        else:
+            active_df = df_sif
+            active_colorscale = px.colors.sequential.Greens
+            active_title = "SAM Locations Colored by Success Rate (N 'Best Quality' SIF retrievals > 200)"
+
+        # Display the data for the currently selected dataset
+        with st.expander(f"Preview {dataset_choice} Data"):
+            st.dataframe(active_df)
             
         # Define the required columns
         required_columns = ['Target Name', 'latitude', 'longitude', 'count_GT200_soundings', 'count_all', 'SAM_success_rate']
         
-        # Check for missing columns
-        missing_columns = [col for col in required_columns if col not in df.columns]
+        # Check for missing columns in the active dataframe
+        missing_columns = [col for col in required_columns if col not in active_df.columns]
         
         if missing_columns:
-            st.error(f"The file is missing the following required columns: {', '.join(missing_columns)}")
+            st.error(f"The {dataset_choice} file is missing the following required columns: {', '.join(missing_columns)}")
         else:
             # Ensure proper data types
-            df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
-            df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
-            df['SAM_success_rate'] = pd.to_numeric(df['SAM_success_rate'], errors='coerce')
+            active_df['latitude'] = pd.to_numeric(active_df['latitude'], errors='coerce')
+            active_df['longitude'] = pd.to_numeric(active_df['longitude'], errors='coerce')
+            active_df['SAM_success_rate'] = pd.to_numeric(active_df['SAM_success_rate'], errors='coerce')
             
             # Drop rows with invalid coordinates or ratio
-            df = df.dropna(subset=['latitude', 'longitude', 'SAM_success_rate'])
+            active_df = active_df.dropna(subset=['latitude', 'longitude', 'SAM_success_rate'])
             
             st.subheader("Interactive Map")
 
-            # Generate Map
+            # Generate Map using the active dataset and styling
             fig = px.scatter_mapbox(
-                df,
+                active_df,
                 lat="latitude",
                 lon="longitude",
                 color="SAM_success_rate",
@@ -56,26 +75,28 @@ else:
                     "count_all": ':.0f',
                     "SAM_success_rate": ':.2f'
                 },
-                color_continuous_scale=px.colors.sequential.Viridis,
-                range_color=[0, 1], # Locks the color scale from 0 to 1
+                color_continuous_scale=active_colorscale, # <--- Uses Viridis or Greens
+                range_color=[0, 1],
                 zoom=1,
                 center={"lat": 0, "lon": 0},
                 mapbox_style='carto-positron',
-                title="SAM Locations Colored by Success Rate (N converged CO2 retrievals > 200)"
+                title=active_title                        # <--- Uses CO2 or SIF title
             )
             
-            #fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+            # Adjust layout
             fig.update_layout(
               margin={"r":0,"t":40,"l":0,"b":0},
-              height=800  # <--- Set the height in pixels (adjust this number as needed)
+              height=800  
             )
 
             fig.update_traces(marker={"size": 10})
 
-            #st.plotly_chart(fig, use_container_width=True)
+            # Render plot
             st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
     except pd.errors.ParserError:
-        st.error("Error parsing the file. Please check if it's correctly formatted (e.g., comma-separated).")
+        st.error("Error parsing one of the files. Please check if they are correctly formatted (e.g., comma-separated).")
     except Exception as e:
         st.error(f"An unexpected error occurred: {e}")
+
+
