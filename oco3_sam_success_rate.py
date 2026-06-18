@@ -17,7 +17,7 @@ def process_co2_data(df):
     
     # Replace -999 fill values
     df['Median Latitude'] = df['Median Latitude'].replace(-999, pd.NA)
-    df['Median Long'] = df['Median Long'].replace(-999, pd.NA)
+    df['Median Longitde'] = df['Median Longitude'].replace(-999, pd.NA)
     
     # Calculate row-level success rate
     df['row_success_rate'] = df['N Good Quality Soundings'] / df['N L2 Soundings'].replace(0, pd.NA)
@@ -26,7 +26,7 @@ def process_co2_data(df):
     df_grouped = df.groupby('Target ID').agg({
         'Target Name': 'first',                
         'Median Latitude': 'mean',             
-        'Median Long': 'mean',                 
+        'Median Longitude': 'mean',                 
         'N Good Quality Soundings': 'sum',     
         'N L2 Soundings': 'sum',               
         'row_success_rate': 'mean'             
@@ -35,7 +35,7 @@ def process_co2_data(df):
     # Rename columns for Mapbox
     return df_grouped.rename(columns={
         'Median Latitude': 'latitude',
-        'Median Long': 'longitude',
+        'Median Longitude': 'longitude',
         'N Good Quality Soundings': 'count_GT200_soundings',
         'N L2 Soundings': 'count_all',
         'row_success_rate': 'SAM_success_rate'
