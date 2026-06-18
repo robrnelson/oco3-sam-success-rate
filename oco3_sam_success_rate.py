@@ -4,9 +4,74 @@ import plotly.express as px
 import os
 
 # --- Configuration ---
-FILE_PATH = "OCO3_SAM_GT200_ratios.txt" 
-SIF_FILE_PATH = "OCO3_SAM_GT200_SIF_ratios.txt" 
+#FILE_PATH = "OCO3_SAM_GT200_ratios.txt" 
+FILE_PATH = "sam_co2_stats_Fisher_20260617.csv" 
+#SIF_FILE_PATH = "OCO3_SAM_GT200_SIF_ratios.txt" 
+SIF_FILE_PATH = "sam_sif_stats2_Fisher_20260617.csv" 
 # ---------------------
+
+
+def process_co2_data(df):
+    """Processes the CO2 dataset."""
+    df.columns = df.columns.str.strip()
+    
+    # Replace -999 fill values
+    df['Median Latitude'] = df['Median Latitude'].replace(-999, pd.NA)
+    df['Median Long'] = df['Median Long'].replace(-999, pd.NA)
+    
+    # Calculate row-level success rate
+    df['row_success_rate'] = df['N Good Quality Soundings'] / df['N L2 Soundings'].replace(0, pd.NA)
+    
+    # Group by Target ID
+    df_grouped = df.groupby('Target ID').agg({
+        'Target Name': 'first',                
+        'Median Latitude': 'mean',             
+        'Median Long': 'mean',                 
+        'N Good Quality Soundings': 'sum',     
+        'N L2 Soundings': 'sum',               
+        'row_success_rate': 'mean'             
+    }).reset_index()
+    
+    # Rename columns for Mapbox
+    return df_grouped.rename(columns={
+        'Median Latitude': 'latitude',
+        'Median Long': 'longitude',
+        'N Good Quality Soundings': 'count_GT200_soundings',
+        'N L2 Soundings': 'count_all',
+        'row_success_rate': 'SAM_success_rate'
+    })
+
+
+def process_sif_data(df):
+    """Processes the SIF dataset."""
+    df.columns = df.columns.str.strip()
+    
+    # Replace -999 fill values
+    df['Site Latitude'] = df['Site Latitude'].replace(-999, pd.NA)
+    df['Site Longitude'] = df['Site Longitude'].replace(-999, pd.NA)
+    
+    # Calculate row-level success rate (using N Good Soundings / Total Soundings)
+    df['row_success_rate'] = df['N Good Soundings'] / df['Total Soundings'].replace(0, pd.NA)
+    
+    # Group by Target ID
+    df_grouped = df.groupby('Target ID').agg({
+        'Target Name': 'first',
+        'Site Latitude': 'mean',
+        'Site Longitude': 'mean',
+        'N Good Soundings': 'sum',
+        'Total Soundings': 'sum',
+        'row_success_rate': 'mean'
+    }).reset_index()
+    
+    # Rename columns for Mapbox
+    return df_grouped.rename(columns={
+        'Site Latitude': 'latitude',
+        'Site Longitude': 'longitude',
+        'N Good Soundings': 'count_GT200_soundings',
+        'Total Soundings': 'count_all',
+        'row_success_rate': 'SAM_success_rate'
+    })
+
 
 st.set_page_config(page_title="OCO-3 SAM Success Rate Map", layout="wide")
 st.title("OCO-3 SAM Success Rate Map Viewer")
@@ -19,7 +84,11 @@ else:
         # Read the files
         df_co2 = pd.read_csv(FILE_PATH, sep=',', engine='python')
         df_sif = pd.read_csv(SIF_FILE_PATH, sep=',', engine='python')
-        
+      
+        # Process the raw files using their specific functions
+        df_co2 = process_co2_data(raw_df_co2)
+        df_sif = process_sif_data(raw_df_sif)
+  
         # --- UI Toggle ---
         # Let the user choose which dataset to view
         dataset_choice = st.radio(
