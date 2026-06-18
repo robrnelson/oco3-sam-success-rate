@@ -13,11 +13,14 @@ SIF_FILE_PATH = "sam_sif_stats2_Fisher_20260617.csv"
 
 def process_co2_data(df):
     """Processes the CO2 dataset."""
+    # Clean up column names just in case there are trailing spaces
     df.columns = df.columns.str.strip()
     
     # Replace -999 fill values
-    df['Median Latitude'] = df['Median Latitude'].replace(-999, pd.NA)
-    df['Median Longitde'] = df['Median Longitude'].replace(-999, pd.NA)
+    df['Median Latitude'] = df['Median Latitude'].replace(-999.0, pd.NA)
+    df['Median Longitude'] = df['Median Longitude'].replace(-999.0, pd.NA) # <--- Corrected
+    #df['Median Latitude'] = df['Median Latitude'].replace(-999, pd.NA)
+    #df['Median Longitude'] = df['Median Longitude'].replace(-999, pd.NA) # <--- Corrected
     
     # Calculate row-level success rate
     df['row_success_rate'] = df['N Good Quality Soundings'] / df['N L2 Soundings'].replace(0, pd.NA)
@@ -26,50 +29,47 @@ def process_co2_data(df):
     df_grouped = df.groupby('Target ID').agg({
         'Target Name': 'first',                
         'Median Latitude': 'mean',             
-        'Median Longitude': 'mean',                 
+        'Median Longitude': 'mean',            # <--- Corrected
         'N Good Quality Soundings': 'sum',     
         'N L2 Soundings': 'sum',               
-        'row_success_rate': 'mean'             
+        'row_success_rate': 'mean',
+        'Start Time': 'count'                  
     }).reset_index()
     
     # Rename columns for Mapbox
     return df_grouped.rename(columns={
         'Median Latitude': 'latitude',
-        'Median Longitude': 'longitude',
+        'Median Longitude': 'longitude',       # <--- Corrected
         'N Good Quality Soundings': 'count_GT200_soundings',
         'N L2 Soundings': 'count_all',
-        'row_success_rate': 'SAM_success_rate'
+        'row_success_rate': 'SAM_success_rate',
+        'Start Time': 'N_SAMs'                 
     })
 
 
 def process_sif_data(df):
-    """Processes the SIF dataset."""
     df.columns = df.columns.str.strip()
-    
-    # Replace -999 fill values
-    df['Site Latitude'] = df['Site Latitude'].replace(-999, pd.NA)
-    df['Site Longitude'] = df['Site Longitude'].replace(-999, pd.NA)
-    
-    # Calculate row-level success rate (using N Good Soundings / Total Soundings)
+    #df['Site Latitude'] = df['Site Latitude'].replace(-999, pd.NA)
+    #df['Site Longitude'] = df['Site Longitude'].replace(-999, pd.NA)
     df['row_success_rate'] = df['N Good Soundings'] / df['Total Soundings'].replace(0, pd.NA)
     
-    # Group by Target ID
     df_grouped = df.groupby('Target ID').agg({
         'Target Name': 'first',
         'Site Latitude': 'mean',
         'Site Longitude': 'mean',
         'N Good Soundings': 'sum',
         'Total Soundings': 'sum',
-        'row_success_rate': 'mean'
+        'row_success_rate': 'mean',
+        'Start Time': 'count'                  # <--- Add this to count the rows
     }).reset_index()
     
-    # Rename columns for Mapbox
     return df_grouped.rename(columns={
         'Site Latitude': 'latitude',
         'Site Longitude': 'longitude',
         'N Good Soundings': 'count_GT200_soundings',
         'Total Soundings': 'count_all',
-        'row_success_rate': 'SAM_success_rate'
+        'row_success_rate': 'SAM_success_rate',
+        'Start Time': 'N_SAMs'                 # <--- Rename it to N_SAMs
     })
 
 
@@ -110,7 +110,9 @@ else:
 
         # Display the data for the currently selected dataset
         with st.expander(f"Preview {dataset_choice} Data"):
-            st.dataframe(active_df)
+            preview_columns = ['Target ID', 'Target Name', 'latitude', 'longitude', 'N_SAMs', 'SAM_success_rate']
+            st.dataframe(active_df[preview_columns])
+            #st.dataframe(active_df)
             
         # Define the required columns
         required_columns = ['Target Name', 'latitude', 'longitude', 'count_GT200_soundings', 'count_all', 'SAM_success_rate']
@@ -141,8 +143,9 @@ else:
                 hover_data={
                     "latitude": ':.2f', 
                     "longitude": ':.2f',
-                    "count_GT200_soundings": ':.0f',
-                    "count_all": ':.0f',
+                    "N_SAMs": True,
+                    #"count_GT200_soundings": ':.0f',
+                    #"count_all": ':.0f',
                     "SAM_success_rate": ':.2f'
                 },
                 color_continuous_scale=active_colorscale, # <--- Uses Viridis or Greens
