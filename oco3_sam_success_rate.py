@@ -89,7 +89,7 @@ else:
         # Process the raw files using their specific functions
         df_co2 = process_co2_data(raw_df_co2)
         df_sif = process_sif_data(raw_df_sif)
-  
+
         # --- UI Toggle ---
         # Let the user choose which dataset to view
         dataset_choice = st.radio(
@@ -103,43 +103,54 @@ else:
             active_df = df_co2
             active_colorscale = px.colors.sequential.Viridis
             active_title = "SAM Locations Colored by the Mean Fraction of Good Quality Retrievals"
-            #active_title = "SAM Locations Colored by Success Rate (N converged CO2 retrievals > 200)"
         else:
             active_df = df_sif
             active_colorscale = px.colors.sequential.Viridis
-            #active_colorscale = px.colors.sequential.YlGn
             active_title = "SAM Locations Colored by the Mean Fraction of Good Quality Retrievals"
-            #active_title = "SAM Locations Colored by Success Rate (N 'Best Quality' SIF retrievals > 200)"
 
-        # Display the data for the currently selected dataset
-        with st.expander(f"Preview {dataset_choice} Data"):
+        # --- N_SAMs Filter Slider ---
+        # Get the min and max dynamically so the slider adapts to whichever dataset is chosen
+        min_possible = int(active_df['N_SAMs'].min())
+        max_possible = int(active_df['N_SAMs'].max())
+        
+        selected_min_sams = st.slider(
+            "Filter by Minimum N_SAMs:",
+            min_value=min_possible,
+            max_value=max_possible,
+            value=min_possible,  # Default to showing everything (the minimum value)
+            step=1
+        )
+        
+        # Crop the dataframe based on the slider
+        filtered_df = active_df[active_df['N_SAMs'] >= selected_min_sams].copy()
+
+        # Display the FILTERED data
+        with st.expander(f"Preview {dataset_choice} Data (Showing {len(filtered_df)} targets)"):
             preview_columns = ['Target ID', 'Target Name', 'latitude', 'longitude', 'N_SAMs', 'SAM_good_quality_fraction']
-            st.dataframe(active_df[preview_columns])
-            #st.dataframe(active_df)
+            st.dataframe(filtered_df[preview_columns])
             
         # Define the required columns
         required_columns = ['Target Name', 'latitude', 'longitude', 'SAM_good_quality_fraction']
-        #required_columns = ['Target Name', 'latitude', 'longitude', 'count_GT200_soundings', 'count_all', 'SAM_success_rate']
         
-        # Check for missing columns in the active dataframe
-        missing_columns = [col for col in required_columns if col not in active_df.columns]
+        # Check for missing columns in the filtered dataframe
+        missing_columns = [col for col in required_columns if col not in filtered_df.columns]
         
         if missing_columns:
             st.error(f"The {dataset_choice} file is missing the following required columns: {', '.join(missing_columns)}")
         else:
-            # Ensure proper data types
-            active_df['latitude'] = pd.to_numeric(active_df['latitude'], errors='coerce')
-            active_df['longitude'] = pd.to_numeric(active_df['longitude'], errors='coerce')
-            active_df['SAM_good_quality_fraction'] = pd.to_numeric(active_df['SAM_good_quality_fraction'], errors='coerce')
+            # Ensure proper data types on the filtered data
+            filtered_df['latitude'] = pd.to_numeric(filtered_df['latitude'], errors='coerce')
+            filtered_df['longitude'] = pd.to_numeric(filtered_df['longitude'], errors='coerce')
+            filtered_df['SAM_good_quality_fraction'] = pd.to_numeric(filtered_df['SAM_good_quality_fraction'], errors='coerce')
             
             # Drop rows with invalid coordinates or ratio
-            active_df = active_df.dropna(subset=['latitude', 'longitude', 'SAM_good_quality_fraction'])
+            filtered_df = filtered_df.dropna(subset=['latitude', 'longitude', 'SAM_good_quality_fraction'])
             
-            st.subheader("Interactive Map")
+            st.subheader("Interactive Map") 
 
             # Generate Map using the active dataset and styling
             fig = px.scatter_mapbox(
-                active_df,
+                filtered_df,
                 lat="latitude",
                 lon="longitude",
                 color="SAM_good_quality_fraction",
