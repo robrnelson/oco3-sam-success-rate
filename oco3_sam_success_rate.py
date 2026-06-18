@@ -42,7 +42,7 @@ def process_co2_data(df):
         'Median Longitude': 'longitude',       # <--- Corrected
         'N Good Quality Soundings': 'count_GT200_soundings',
         'N L2 Soundings': 'count_all',
-        'row_success_rate': 'SAM_success_rate',
+        'row_success_rate': 'SAM_good_quality_fraction',
         'Start Time': 'N_SAMs'                 
     })
 
@@ -68,13 +68,14 @@ def process_sif_data(df):
         'Site Longitude': 'longitude',
         'N Good Soundings': 'count_GT200_soundings',
         'Total Soundings': 'count_all',
-        'row_success_rate': 'SAM_success_rate',
+        'row_success_rate': 'SAM_good_quality_fraction',
         'Start Time': 'N_SAMs'                 # <--- Rename it to N_SAMs
     })
 
 
 st.set_page_config(page_title="OCO-3 SAM Success Rate Map", layout="wide")
-st.title("OCO-3 SAM Success Rate Map Viewer")
+#st.title("OCO-3 SAM Success Rate Map Viewer")
+st.title("OCO-3 SAM Good Retrieval Fraction Map Viewer")
 
 # Check if both hard-coded files actually exist
 if not os.path.exists(FILE_PATH) or not os.path.exists(SIF_FILE_PATH):
@@ -101,21 +102,23 @@ else:
         if dataset_choice == "CO2":
             active_df = df_co2
             active_colorscale = px.colors.sequential.Viridis
-            active_title = "SAM Locations Colored by Success Rate (N converged CO2 retrievals > 200)"
+            active_title = "SAM Locations Colored by the Mean Fraction of Good Quality Retrievals"
+            #active_title = "SAM Locations Colored by Success Rate (N converged CO2 retrievals > 200)"
         else:
             active_df = df_sif
             active_colorscale = px.colors.sequential.Viridis
             #active_colorscale = px.colors.sequential.YlGn
-            active_title = "SAM Locations Colored by Success Rate (N 'Best Quality' SIF retrievals > 200)"
+            active_title = "SAM Locations Colored by the Mean Fraction of Good Quality Retrievals"
+            #active_title = "SAM Locations Colored by Success Rate (N 'Best Quality' SIF retrievals > 200)"
 
         # Display the data for the currently selected dataset
         with st.expander(f"Preview {dataset_choice} Data"):
-            preview_columns = ['Target ID', 'Target Name', 'latitude', 'longitude', 'N_SAMs', 'SAM_success_rate']
+            preview_columns = ['Target ID', 'Target Name', 'latitude', 'longitude', 'N_SAMs', 'SAM_good_quality_fraction']
             st.dataframe(active_df[preview_columns])
             #st.dataframe(active_df)
             
         # Define the required columns
-        required_columns = ['Target Name', 'latitude', 'longitude', 'SAM_success_rate']
+        required_columns = ['Target Name', 'latitude', 'longitude', 'SAM_good_quality_fraction']
         #required_columns = ['Target Name', 'latitude', 'longitude', 'count_GT200_soundings', 'count_all', 'SAM_success_rate']
         
         # Check for missing columns in the active dataframe
@@ -127,10 +130,10 @@ else:
             # Ensure proper data types
             active_df['latitude'] = pd.to_numeric(active_df['latitude'], errors='coerce')
             active_df['longitude'] = pd.to_numeric(active_df['longitude'], errors='coerce')
-            active_df['SAM_success_rate'] = pd.to_numeric(active_df['SAM_success_rate'], errors='coerce')
+            active_df['SAM_good_quality_fraction'] = pd.to_numeric(active_df['SAM_good_quality_fraction'], errors='coerce')
             
             # Drop rows with invalid coordinates or ratio
-            active_df = active_df.dropna(subset=['latitude', 'longitude', 'SAM_success_rate'])
+            active_df = active_df.dropna(subset=['latitude', 'longitude', 'SAM_good_quality_fraction'])
             
             st.subheader("Interactive Map")
 
@@ -139,7 +142,7 @@ else:
                 active_df,
                 lat="latitude",
                 lon="longitude",
-                color="SAM_success_rate",
+                color="SAM_good_quality_fraction",
                 hover_name="Target Name",
                 hover_data={
                     "Target ID": True, 
@@ -148,7 +151,7 @@ else:
                     "N_SAMs": True,
                     #"count_GT200_soundings": ':.0f',
                     #"count_all": ':.0f',
-                    "SAM_success_rate": ':.2f'
+                    "SAM_good_quality_fraction": ':.3f'
                 },
                 color_continuous_scale=active_colorscale, # <--- Uses Viridis or Greens
                 range_color=[0, 1],
