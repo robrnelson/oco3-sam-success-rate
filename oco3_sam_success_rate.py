@@ -125,25 +125,27 @@ else:
             step=1
         )
         
-        # 2. Powerplant Toggle
-        show_only_powerplants = st.checkbox("Only show targets containing 'powerplant' in Target Name", value=False)
-        
-        # 3. Target ID Prefix Checkboxes (arranged in a 4-column grid)
+        # 2. Target ID Prefix Checkboxes
         st.write("**Include Target IDs starting with:**")
         target_prefixes = ["C40", "cal", "coccon", "desert", "ecostress", "fossil", "sif", "tccon", "texmex", "val", "volcano"]
+        
+        # The Deselect All checkbox
+        deselect_all = st.checkbox("Deselect All", value=False)
         
         cols = st.columns(4)
         selected_prefixes = []
         
         for i, prefix in enumerate(target_prefixes):
-            # Place each checkbox in a column, wrapping around using modulo math
             with cols[i % 4]:
-                if st.checkbox(prefix, value=True):
+                # By tying the key to the deselect_all state, Streamlit will completely reset 
+                # the checkboxes whenever you toggle "Deselect All", avoiding state conflicts!
+                if st.checkbox(prefix, value=not deselect_all, key=f"{prefix}_{deselect_all}"):
                     selected_prefixes.append(prefix)
-                    
-        # Add the "Other" safety net in the next available column
-        with cols[len(target_prefixes) % 4]:
-            show_other = st.checkbox("Other (Uncategorized)", value=True)
+
+        st.write("") # Adds a tiny bit of vertical space before the next toggle
+        
+        # 3. Powerplant Toggle (Moved to the bottom)
+        show_only_powerplants = st.checkbox("Only show targets containing 'powerplant' in Target Name", value=False)
 
         # --- Apply the Filters ---
         # Step 1: Crop by N_SAMs
@@ -154,24 +156,14 @@ else:
             filtered_df = filtered_df[filtered_df['Target Name'].str.contains('powerplant', case=False, na=False)]
             
         # Step 3: Crop by Target ID Prefix
-        # Get a true/false mask of rows that match the user's selected prefixes
         if selected_prefixes:
             prefix_mask = filtered_df['Target ID'].str.startswith(tuple(selected_prefixes), na=False)
         else:
-            prefix_mask = pd.Series(False, index=filtered_df.index) # If everything is unchecked
-            
-        # Handle the "Other" targets
-        if show_other:
-            # Find targets that don't match ANY of our hard-coded target_prefixes
-            all_prefixes_mask = filtered_df['Target ID'].str.startswith(tuple(target_prefixes), na=False)
-            other_mask = ~all_prefixes_mask
-            # Combine the two masks (show selected prefixes OR others)
-            final_mask = prefix_mask | other_mask
-        else:
-            final_mask = prefix_mask
+            # If everything is unchecked (including if they just clicked "Deselect All"), show nothing
+            prefix_mask = pd.Series(False, index=filtered_df.index) 
             
         # Apply the final prefix mask
-        filtered_df = filtered_df[final_mask]
+        filtered_df = filtered_df[prefix_mask]
 
         st.divider()
 
