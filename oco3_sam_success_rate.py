@@ -108,23 +108,74 @@ else:
             active_colorscale = px.colors.sequential.Viridis
             active_title = "SAM Locations Colored by the Mean Fraction of Good Quality Retrievals"
 
-        # --- N_SAMs Filter Slider ---
-        # Get the min and max dynamically so the slider adapts to whichever dataset is chosen
+        st.divider() # Adds a clean visual line to separate toggles from filters
+
+        # --- Filtering UI ---
+        st.write("### Data Filters")
+        
+        # 1. N_SAMs Slider
         min_possible = int(active_df['N_SAMs'].min())
         max_possible = int(active_df['N_SAMs'].max())
         
         selected_min_sams = st.slider(
-            "Filter by Minimum N_SAMs:",
+            "Minimum N_SAMs:",
             min_value=min_possible,
             max_value=max_possible,
-            value=min_possible,  # Default to showing everything (the minimum value)
+            value=min_possible,
             step=1
         )
         
-        # Crop the dataframe based on the slider
-        filtered_df = active_df[active_df['N_SAMs'] >= selected_min_sams].copy()
+        # 2. Powerplant Toggle
+        show_only_powerplants = st.checkbox("Only show targets containing 'powerplant' in Target Name", value=False)
+        
+        # 3. Target ID Prefix Checkboxes (arranged in a 4-column grid)
+        st.write("**Include Target IDs starting with:**")
+        target_prefixes = ["C40", "cal", "coccon", "desert", "ecostress", "fossil", "sif", "tccon", "texmex", "val", "volcano"]
+        
+        cols = st.columns(4)
+        selected_prefixes = []
+        
+        for i, prefix in enumerate(target_prefixes):
+            # Place each checkbox in a column, wrapping around using modulo math
+            with cols[i % 4]:
+                if st.checkbox(prefix, value=True):
+                    selected_prefixes.append(prefix)
+                    
+        # Add the "Other" safety net in the next available column
+        with cols[len(target_prefixes) % 4]:
+            show_other = st.checkbox("Other (Uncategorized)", value=True)
 
-        # Display the FILTERED data
+        # --- Apply the Filters ---
+        # Step 1: Crop by N_SAMs
+        filtered_df = active_df[active_df['N_SAMs'] >= selected_min_sams].copy()
+        
+        # Step 2: Crop by Powerplant (if checked)
+        if show_only_powerplants:
+            filtered_df = filtered_df[filtered_df['Target Name'].str.contains('powerplant', case=False, na=False)]
+            
+        # Step 3: Crop by Target ID Prefix
+        # Get a true/false mask of rows that match the user's selected prefixes
+        if selected_prefixes:
+            prefix_mask = filtered_df['Target ID'].str.startswith(tuple(selected_prefixes), na=False)
+        else:
+            prefix_mask = pd.Series(False, index=filtered_df.index) # If everything is unchecked
+            
+        # Handle the "Other" targets
+        if show_other:
+            # Find targets that don't match ANY of our hard-coded target_prefixes
+            all_prefixes_mask = filtered_df['Target ID'].str.startswith(tuple(target_prefixes), na=False)
+            other_mask = ~all_prefixes_mask
+            # Combine the two masks (show selected prefixes OR others)
+            final_mask = prefix_mask | other_mask
+        else:
+            final_mask = prefix_mask
+            
+        # Apply the final prefix mask
+        filtered_df = filtered_df[final_mask]
+
+        st.divider()
+
+        # --- Display the Data ---
         with st.expander(f"Preview {dataset_choice} Data (Showing {len(filtered_df)} targets)"):
             preview_columns = ['Target ID', 'Target Name', 'latitude', 'longitude', 'N_SAMs', 'SAM_good_quality_fraction']
             st.dataframe(filtered_df[preview_columns])
@@ -146,7 +197,7 @@ else:
             # Drop rows with invalid coordinates or ratio
             filtered_df = filtered_df.dropna(subset=['latitude', 'longitude', 'SAM_good_quality_fraction'])
             
-            st.subheader("Interactive Map") 
+            st.subheader("Interactive Map")
 
             # Generate Map using the active dataset and styling
             fig = px.scatter_mapbox(
@@ -175,7 +226,7 @@ else:
             # Adjust layout
             fig.update_layout(
               margin={"r":0,"t":40,"l":0,"b":0},
-              height=800  
+              height=600  
             )
 
             fig.update_traces(marker={"size": 12})
