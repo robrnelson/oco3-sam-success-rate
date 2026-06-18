@@ -82,8 +82,8 @@ if not os.path.exists(FILE_PATH) or not os.path.exists(SIF_FILE_PATH):
 else:
     try:
         # Read the files
-        df_co2 = pd.read_csv(FILE_PATH, sep=',', engine='python')
-        df_sif = pd.read_csv(SIF_FILE_PATH, sep=',', engine='python')
+        raw_df_co2 = pd.read_csv(FILE_PATH, sep=',', engine='python')
+        raw_df_sif = pd.read_csv(SIF_FILE_PATH, sep=',', engine='python')
       
         # Process the raw files using their specific functions
         df_co2 = process_co2_data(raw_df_co2)
