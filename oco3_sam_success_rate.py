@@ -115,7 +115,8 @@ else:
             #st.dataframe(active_df)
             
         # Define the required columns
-        required_columns = ['Target Name', 'latitude', 'longitude', 'count_GT200_soundings', 'count_all', 'SAM_success_rate']
+        required_columns = ['Target Name', 'latitude', 'longitude', 'SAM_success_rate']
+        #required_columns = ['Target Name', 'latitude', 'longitude', 'count_GT200_soundings', 'count_all', 'SAM_success_rate']
         
         # Check for missing columns in the active dataframe
         missing_columns = [col for col in required_columns if col not in active_df.columns]
@@ -141,6 +142,7 @@ else:
                 color="SAM_success_rate",
                 hover_name="Target Name",
                 hover_data={
+                    "Target ID": True, 
                     "latitude": ':.2f', 
                     "longitude": ':.2f',
                     "N_SAMs": True,
