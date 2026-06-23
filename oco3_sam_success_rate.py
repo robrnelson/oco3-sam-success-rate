@@ -152,6 +152,17 @@ else:
         # 3. Powerplant Toggle (Moved to the bottom)
         show_only_powerplants = st.checkbox("Power plants", value=False)
 
+        st.write("") # Adds a tiny bit of vertical space
+        
+        # 4. Color Scale Range Slider
+        selected_color_range = st.slider(
+            "Map Color Scale Range:",
+            min_value=0.0,
+            max_value=1.0,
+            value=(0.0, 0.8), # Passing a tuple creates a double-ended slider!
+            step=0.05
+        )
+
         # --- Apply the Filters ---
         # Step 1: Crop by N_SAMs
         filtered_df = active_df[active_df['N_SAMs'] >= selected_min_sams].copy()
@@ -214,7 +225,7 @@ else:
                 },
                 color_continuous_scale=active_colorscale, # <--- Uses Viridis or Greens
                 #range_color=[0, 1],
-                range_color=[0, 0.8],
+                range_color=selected_color_range,
                 zoom=1,
                 center={"lat": 0, "lon": 0},
                 mapbox_style='carto-positron',
