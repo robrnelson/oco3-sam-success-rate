@@ -118,19 +118,7 @@ else:
         # --- Filtering UI ---
         st.write("### Data Filters")
         
-        # 1. N_SAMs Slider
-        min_possible = int(active_df['N_SAMs'].min())
-        max_possible = int(active_df['N_SAMs'].max())
-        
-        selected_min_sams = st.slider(
-            "Minimum N_SAMs:",
-            min_value=min_possible,
-            max_value=max_possible,
-            value=min_possible,
-            step=1
-        )
-        
-        # 2. Target ID Prefix Checkboxes
+        # Target ID Prefix Checkboxes
         st.write("**Include Target IDs starting with:**")
         target_prefixes = ["C40", "cal", "coccon", "desert", "ecostress", "fossil", "sif", "tccon", "texmex", "val", "volcano"]
         
@@ -149,8 +137,20 @@ else:
 
         st.write("") # Adds a tiny bit of vertical space before the next toggle
         
-        # 3. Powerplant Toggle (Moved to the bottom)
+        # Powerplant Toggle (Moved to the bottom)
         show_only_powerplants = st.checkbox("Power plants", value=False)
+
+        # N_SAMs Slider
+        min_possible = int(active_df['N_SAMs'].min())
+        max_possible = int(active_df['N_SAMs'].max())
+        
+        selected_min_sams = st.slider(
+            "Minimum N_SAMs:",
+            min_value=min_possible,
+            max_value=max_possible,
+            value=min_possible,
+            step=1
+        )
 
         # --- Apply the Filters ---
         # Step 1: Crop by N_SAMs
