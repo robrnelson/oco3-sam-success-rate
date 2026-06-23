@@ -23,7 +23,11 @@ def process_co2_data(df):
     #df['Median Longitude'] = df['Median Longitude'].replace(-999, pd.NA) # <--- Corrected
     
     # Calculate row-level success rate
-    df['row_success_rate'] = df['N Good Quality Soundings'] / df['N L2 Soundings'].replace(0, pd.NA)
+    #df['row_success_rate'] = df['N Good Quality Soundings'] / df['N L2 Soundings'].replace(0, pd.NA)
+
+    # I actually want N Good Quality Soundings / N Total Soundings
+    # Going to approximate N Total Soundings = 2880 to save everyone some work
+    df['row_success_rate'] = df['N Good Quality Soundings'] / 2880 #.replace(0, pd.NA)
     
     # Group by Target ID
     df_grouped = df.groupby('Target ID').agg({
@@ -51,7 +55,8 @@ def process_sif_data(df):
     df.columns = df.columns.str.strip()
     #df['Site Latitude'] = df['Site Latitude'].replace(-999, pd.NA)
     #df['Site Longitude'] = df['Site Longitude'].replace(-999, pd.NA)
-    df['row_success_rate'] = df['N Good Soundings'] / df['Total Soundings'].replace(0, pd.NA)
+    #df['row_success_rate'] = df['N Good Soundings'] / df['Total Soundings'].replace(0, pd.NA)
+    df['row_success_rate'] = df['N Good Soundings'] / 2880 #.replace(0, pd.NA)
     
     df_grouped = df.groupby('Target ID').agg({
         'Target Name': 'first',
@@ -73,9 +78,9 @@ def process_sif_data(df):
     })
 
 
-st.set_page_config(page_title="OCO-3 SAM Success Rate Map", layout="wide")
+st.set_page_config(page_title="OCO-3 SAM Good Quality Retrieval Fraction Map Viewer", layout="wide")
 #st.title("OCO-3 SAM Success Rate Map Viewer")
-st.title("OCO-3 SAM Good Retrieval Fraction Map Viewer")
+st.title("OCO-3 SAM Good Quality Retrieval Fraction Map Viewer")
 
 # Check if both hard-coded files actually exist
 if not os.path.exists(FILE_PATH) or not os.path.exists(SIF_FILE_PATH):
@@ -102,11 +107,11 @@ else:
         if dataset_choice == "CO2":
             active_df = df_co2
             active_colorscale = px.colors.sequential.Viridis
-            active_title = "SAM Locations Colored by the Mean Fraction of Good Quality Retrievals"
+            active_title = "SAM Locations Colored by the Mean Fraction of Good Quality CO2 Retrievals (N Good Quality Soundings / N Total Soundings)"
         else:
             active_df = df_sif
             active_colorscale = px.colors.sequential.Viridis
-            active_title = "SAM Locations Colored by the Mean Fraction of Good Quality Retrievals"
+            active_title = "SAM Locations Colored by the Mean Fraction of Good Quality SIF Retrievals (N Good Quality Soundings / N Total Soundings)"
 
         st.divider() # Adds a clean visual line to separate toggles from filters
 
@@ -145,7 +150,7 @@ else:
         st.write("") # Adds a tiny bit of vertical space before the next toggle
         
         # 3. Powerplant Toggle (Moved to the bottom)
-        show_only_powerplants = st.checkbox("Only show targets containing 'powerplant' in Target Name", value=False)
+        show_only_powerplants = st.checkbox("Power plants", value=False)
 
         # --- Apply the Filters ---
         # Step 1: Crop by N_SAMs
