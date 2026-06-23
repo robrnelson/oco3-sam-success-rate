@@ -213,7 +213,8 @@ else:
                     "SAM_good_quality_fraction": ':.3f'
                 },
                 color_continuous_scale=active_colorscale, # <--- Uses Viridis or Greens
-                range_color=[0, 1],
+                #range_color=[0, 1],
+                range_color=[0, 0.8],
                 zoom=1,
                 center={"lat": 0, "lon": 0},
                 mapbox_style='carto-positron',
