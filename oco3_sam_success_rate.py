@@ -152,17 +152,6 @@ else:
         # 3. Powerplant Toggle (Moved to the bottom)
         show_only_powerplants = st.checkbox("Power plants", value=False)
 
-        st.write("") # Adds a tiny bit of vertical space
-        
-        # 4. Color Scale Range Slider
-        selected_color_range = st.slider(
-            "Map Color Scale Range:",
-            min_value=0.0,
-            max_value=1.0,
-            value=(0.0, 0.8), # Passing a tuple creates a double-ended slider!
-            step=0.05
-        )
-
         # --- Apply the Filters ---
         # Step 1: Crop by N_SAMs
         filtered_df = active_df[active_df['N_SAMs'] >= selected_min_sams].copy()
@@ -204,9 +193,23 @@ else:
             
             # Drop rows with invalid coordinates or ratio
             filtered_df = filtered_df.dropna(subset=['latitude', 'longitude', 'SAM_good_quality_fraction'])
-            
-            st.subheader("Interactive Map")
 
+            # --- Map Layout & Styling ---
+            # Create two columns: a wide one for the title, a narrow one for the slider
+            map_title_col, slider_col = st.columns([4, 1]) 
+            
+            with map_title_col:
+                st.subheader("Interactive Map")
+                
+            with slider_col:
+                selected_color_range = st.slider(
+                    "Color Range:",
+                    min_value=0.0,
+                    max_value=1.0,
+                    value=(0.0, 0.8),
+                    step=0.05
+                )
+            
             # Generate Map using the active dataset and styling
             fig = px.scatter_mapbox(
                 filtered_df,
