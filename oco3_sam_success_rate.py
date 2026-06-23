@@ -196,7 +196,7 @@ else:
 
             # --- Map Layout & Styling ---
             # Create two columns: a wide one for the title, a narrow one for the slider
-            map_title_col, slider_col = st.columns([4, 1]) 
+            map_title_col, slider_col = st.columns([6, 1]) 
             
             with map_title_col:
                 st.subheader("Interactive Map")
