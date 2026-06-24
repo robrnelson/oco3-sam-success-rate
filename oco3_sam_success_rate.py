@@ -28,7 +28,11 @@ def process_co2_data(df):
     # I actually want N Good Quality Soundings / N Total Soundings
     # Going to approximate N Total Soundings = 2880 to save everyone some work
     df['row_success_rate'] = df['N Good Quality Soundings'] / 2880 #.replace(0, pd.NA)
-    
+   
+    # NEW: Save a copy of the raw data we need for the time series
+    raw_df = df[['Target ID', 'Target Name', 'Start Time', 'row_success_rate']].copy()
+    raw_df['Start Time'] = pd.to_datetime(raw_df['Start Time'], errors='coerce') # Ensure it is a datetime
+ 
     # Group by Target ID
     df_grouped = df.groupby('Target ID').agg({
         'Target Name': 'first',                
@@ -39,17 +43,18 @@ def process_co2_data(df):
         'row_success_rate': 'mean',
         'Start Time': 'count'                  
     }).reset_index()
-    
-    # Rename columns for Mapbox
-    return df_grouped.rename(columns={
+   
+    df_grouped_renamed = df_grouped.rename(columns={
         'Median Latitude': 'latitude',
-        'Median Longitude': 'longitude',       # <--- Corrected
+        'Median Longitude': 'longitude',       
         'N Good Quality Soundings': 'count_GT200_soundings',
         'N L2 Soundings': 'count_all',
         'row_success_rate': 'SAM_good_quality_fraction',
         'Start Time': 'N_SAMs'                 
     })
-
+    
+    return raw_df, df_grouped_renamed # <--- Return both!
+ 
 
 def process_sif_data(df):
     df.columns = df.columns.str.strip()
@@ -57,6 +62,10 @@ def process_sif_data(df):
     #df['Site Longitude'] = df['Site Longitude'].replace(-999, pd.NA)
     #df['row_success_rate'] = df['N Good Soundings'] / df['Total Soundings'].replace(0, pd.NA)
     df['row_success_rate'] = df['N Good Soundings'] / 2880 #.replace(0, pd.NA)
+
+    # NEW: Save a copy of the raw data we need for the time series
+    raw_df = df[['Target ID', 'Target Name', 'Start Time', 'row_success_rate']].copy()
+    raw_df['Start Time'] = pd.to_datetime(raw_df['Start Time'], errors='coerce') # Ensure it is a datetime
     
     df_grouped = df.groupby('Target ID').agg({
         'Target Name': 'first',
@@ -65,18 +74,20 @@ def process_sif_data(df):
         'N Good Soundings': 'sum',
         'Total Soundings': 'sum',
         'row_success_rate': 'mean',
-        'Start Time': 'count'                  # <--- Add this to count the rows
+        'Start Time': 'count'
     }).reset_index()
-    
-    return df_grouped.rename(columns={
+   
+    df_grouped_renamed = df_grouped.rename(columns={
         'Site Latitude': 'latitude',
         'Site Longitude': 'longitude',
         'N Good Soundings': 'count_GT200_soundings',
         'Total Soundings': 'count_all',
         'row_success_rate': 'SAM_good_quality_fraction',
-        'Start Time': 'N_SAMs'                 # <--- Rename it to N_SAMs
+        'Start Time': 'N_SAMs'                 
     })
-
+    
+    return raw_df, df_grouped_renamed # <--- Return both!
+ 
 
 st.set_page_config(page_title="OCO-3 SAM Good Quality Retrieval Fraction Map Viewer", layout="wide")
 #st.title("OCO-3 SAM Success Rate Map Viewer")
@@ -92,8 +103,10 @@ else:
         raw_df_sif = pd.read_csv(SIF_FILE_PATH, sep=',', engine='python')
       
         # Process the raw files using their specific functions
-        df_co2 = process_co2_data(raw_df_co2)
-        df_sif = process_sif_data(raw_df_sif)
+        raw_co2, df_co2 = process_co2_data(raw_df_co2)
+        raw_sif, df_sif = process_sif_data(raw_df_sif)
+        #df_co2 = process_co2_data(raw_df_co2)
+        #df_sif = process_sif_data(raw_df_sif)
 
         # --- UI Toggle ---
         # Let the user choose which dataset to view
@@ -106,10 +119,12 @@ else:
         # Set variables based on the user's choice
         if dataset_choice == "CO2":
             active_df = df_co2
+            active_raw_df = raw_co2
             active_colorscale = px.colors.sequential.Viridis
             active_title = "SAM Locations Colored by the Mean Fraction of Good Quality CO2 Retrievals (N Good Quality Soundings / N Total Soundings)"
         else:
             active_df = df_sif
+            active_raw_df = raw_sif
             active_colorscale = px.colors.sequential.Viridis
             active_title = "SAM Locations Colored by the Mean Fraction of Good Quality SIF Retrievals (N Good Quality Soundings / N Total Soundings)"
 
@@ -245,6 +260,39 @@ else:
 
             # Render plot
             st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
+
+            st.divider()
+
+            # --- Site Deep Dive (Time Series) ---
+            st.subheader("Individual Site: Success Rate Over Time")
+            
+            # Get the list of Target IDs that survived our current filters
+            available_targets = sorted(filtered_df['Target ID'].unique())
+            
+            if available_targets:
+                # Create a dropdown to select a specific target
+                selected_target = st.selectbox("Select a Target ID to view individual SAMs:", available_targets)
+                
+                # Filter our raw dataframe for only that target
+                target_time_data = active_raw_df[active_raw_df['Target ID'] == selected_target].dropna(subset=['Start Time', 'row_success_rate'])
+                
+                if not target_time_data.empty:
+                    # Generate the time series scatter plot
+                    fig_time = px.scatter(
+                        target_time_data,
+                        x="Start Time",
+                        y="row_success_rate",
+                        title=f"Individual SAM Success Rates for {selected_target}",
+                        labels={"row_success_rate": "Row Success Rate", "Start Time": "Observation Date"},
+                        hover_data={"Target ID": False, "Target Name": True}
+                    )
+                    
+                    fig_time.update_traces(marker={"size": 8, "opacity": 0.7})
+                    fig_time.update_layout(yaxis_range=[-0.05, 1.05]) # Lock Y-axis from 0 to 1
+                    
+                    st.plotly_chart(fig_time, use_container_width=True)
+                else:
+                    st.warning("No valid time data available for this target.")
 
     except pd.errors.ParserError:
         st.error("Error parsing one of the files. Please check if they are correctly formatted (e.g., comma-separated).")
