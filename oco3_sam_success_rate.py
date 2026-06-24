@@ -267,14 +267,16 @@ else:
             st.subheader("Individual Site: Success Rate Over Time")
             
             # Get the list of Target IDs that survived our current filters
-            available_targets = sorted(filtered_df['Target ID'].unique())
+            #available_targets = sorted(filtered_df['Target ID'].unique())
+            available_targets = sorted(filtered_df['Target Name'].unique())
             
             if available_targets:
                 # Create a dropdown to select a specific target
                 selected_target = st.selectbox("Select a Target ID to view individual SAMs:", available_targets)
                 
                 # Filter our raw dataframe for only that target
-                target_time_data = active_raw_df[active_raw_df['Target ID'] == selected_target].dropna(subset=['Start Time', 'row_success_rate'])
+                #target_time_data = active_raw_df[active_raw_df['Target ID'] == selected_target].dropna(subset=['Start Time', 'row_success_rate'])
+                target_time_data = active_raw_df[active_raw_df['Target Name'] == selected_target].dropna(subset=['Start Time', 'row_success_rate'])
                 
                 if not target_time_data.empty:
                     # Generate the time series scatter plot
@@ -284,7 +286,9 @@ else:
                         y="row_success_rate",
                         title=f"Individual SAM Success Rates for {selected_target}",
                         labels={"row_success_rate": "Row Success Rate", "Start Time": "Observation Date"},
-                        hover_data={"Target ID": False, "Target Name": True}
+                        hover_data={"Target ID": True,
+                                    "Target Name": True,
+                                    "Start Time": "|%Y-%m-%d %H:%M:%S"}
                     )
                     
                     fig_time.update_traces(marker={"size": 8, "opacity": 0.7})
