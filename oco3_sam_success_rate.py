@@ -318,7 +318,7 @@ else:
                         x="Start Time",
                         y="row_success_rate",
                         title=f"Good Quality Fractions for {selected_target}",
-                        labels={"row_success_rate": "Row Success Rate", "Start Time": "Observation Date"},
+                        labels={"row_success_rate": "SAM Good Quality Fraction", "Start Time": "Observation Date"},
                         hover_data={
                             "Target ID": True, 
                             "Target Name": True,
