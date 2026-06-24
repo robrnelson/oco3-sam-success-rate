@@ -281,20 +281,26 @@ else:
             if available_targets:
                 # --- Map Click Logic ---
                 default_index = 0  # By default, show the first target in the list
-                
+               
                 # Check if the user clicked a point on the map
                 if map_event and len(map_event.selection.get("points", [])) > 0:
-                    # Get the positional index of the point they clicked
-                    clicked_point_index = map_event.selection["points"][0]["pointIndex"]
                     
-                    # Use .iloc to find the matching row in our filtered dataframe
-                    clicked_target_id = filtered_df.iloc[clicked_point_index]['Target Name']
+                    # Extract the dictionary of data for the clicked point
+                    point_data = map_event.selection["points"][0]
                     
-                    # Find where that target lives in our dropdown list and update the default index
-                    if clicked_target_id in available_targets:
-                        default_index = available_targets.index(clicked_target_id)
+                    # Safely grab the index (Streamlit uses point_index, Plotly natively uses pointIndex)
+                    clicked_point_index = point_data.get("point_index") or point_data.get("pointIndex")
+                    
+                    if clicked_point_index is not None:
+                        # Use .iloc to find the matching row in our filtered dataframe
+                        #clicked_target_id = filtered_df.iloc[clicked_point_index]['Target ID']
+                        clicked_target_id = filtered_df.iloc[clicked_point_index]['Target Name']
+                        
+                        # Find where that target lives in our dropdown list and update the default index
+                        if clicked_target_id in available_targets:
+                            default_index = available_targets.index(clicked_target_id) 
+  
                 # -----------------------
-
                 # The dropdown now defaults to whatever was clicked on the map (or the first item)
                 selected_target = st.selectbox(
                     "Select a Target Name (or click a site on the map above):", 
