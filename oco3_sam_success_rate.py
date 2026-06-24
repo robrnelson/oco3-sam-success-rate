@@ -259,23 +259,50 @@ else:
             fig.update_traces(marker={"size": 12})
 
             # Render plot
-            st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
+            #st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
+
+            # Render plot and capture click events (Requires Streamlit 1.35+)
+            map_event = st.plotly_chart(
+                fig, 
+                use_container_width=True, 
+                config={"scrollZoom": True},
+                on_select="rerun"  # <--- Tells Streamlit to rerun the app when a dot is clicked!
+            )
 
             st.divider()
 
             # --- Site Deep Dive (Time Series) ---
-            st.subheader("Individual Site: Success Rate Over Time")
+            st.subheader("Individual Site Success Rate Over Time")
             
             # Get the list of Target IDs that survived our current filters
             #available_targets = sorted(filtered_df['Target ID'].unique())
             available_targets = sorted(filtered_df['Target Name'].unique())
             
             if available_targets:
-                # Create a dropdown to select a specific target
-                selected_target = st.selectbox("Select a Target ID to view individual SAMs:", available_targets)
+                # --- Map Click Logic ---
+                default_index = 0  # By default, show the first target in the list
+                
+                # Check if the user clicked a point on the map
+                if map_event and len(map_event.selection.get("points", [])) > 0:
+                    # Get the positional index of the point they clicked
+                    clicked_point_index = map_event.selection["points"][0]["pointIndex"]
+                    
+                    # Use .iloc to find the matching row in our filtered dataframe
+                    clicked_target_id = filtered_df.iloc[clicked_point_index]['Target Name']
+                    
+                    # Find where that target lives in our dropdown list and update the default index
+                    if clicked_target_id in available_targets:
+                        default_index = available_targets.index(clicked_target_id)
+                # -----------------------
+
+                # The dropdown now defaults to whatever was clicked on the map (or the first item)
+                selected_target = st.selectbox(
+                    "Select a Target Name (or click a site on the map above):", 
+                    available_targets,
+                    index=default_index # <--- Syncs with the map click
+                )
                 
                 # Filter our raw dataframe for only that target
-                #target_time_data = active_raw_df[active_raw_df['Target ID'] == selected_target].dropna(subset=['Start Time', 'row_success_rate'])
                 target_time_data = active_raw_df[active_raw_df['Target Name'] == selected_target].dropna(subset=['Start Time', 'row_success_rate'])
                 
                 if not target_time_data.empty:
@@ -286,17 +313,20 @@ else:
                         y="row_success_rate",
                         title=f"Individual SAM Success Rates for {selected_target}",
                         labels={"row_success_rate": "Row Success Rate", "Start Time": "Observation Date"},
-                        hover_data={"Target ID": True,
-                                    "Target Name": True,
-                                    "Start Time": "|%Y-%m-%d %H:%M:%S"}
+                        hover_data={
+                            "Target ID": True, 
+                            "Target Name": True,
+                            "Start Time": "|%Y-%m-%d %H:%M:%S"
+                        }
                     )
                     
                     fig_time.update_traces(marker={"size": 8, "opacity": 0.7})
-                    fig_time.update_layout(yaxis_range=[-0.05, 1.05]) # Lock Y-axis from 0 to 1
+                    fig_time.update_layout(yaxis_range=[-0.05, 1.05]) 
                     
                     st.plotly_chart(fig_time, use_container_width=True)
                 else:
                     st.warning("No valid time data available for this target.")
+
 
     except pd.errors.ParserError:
         st.error("Error parsing one of the files. Please check if they are correctly formatted (e.g., comma-separated).")
