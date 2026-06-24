@@ -272,7 +272,7 @@ else:
             st.divider()
 
             # --- Site Deep Dive (Time Series) ---
-            st.subheader("Individual Site Success Rate Over Time")
+            st.subheader("Individual Site Fraction of Good Retrievals Over Time")
             
             # Get the list of Target IDs that survived our current filters
             #available_targets = sorted(filtered_df['Target ID'].unique())
