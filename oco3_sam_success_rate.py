@@ -339,7 +339,7 @@ else:
                         tickformat="%b %Y",      # Formats the label cleanly (e.g., "Aug 2019")
                         showgrid=True,           # Ensures the grid lines are drawn
                         gridcolor="LightGray",   # Optional: Makes the grid lines visible but subtle
-                        tickangle=90             # Angles the text so the months don't overlap
+                        tickangle=90,             # Angles the text so the months don't overlap
                         tickfont={"size": 14}
                     )
                     
