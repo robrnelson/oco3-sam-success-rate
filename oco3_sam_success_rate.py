@@ -326,10 +326,25 @@ else:
                         }
                     )
                     
+                    #fig_time.update_traces(marker={"size": 8, "opacity": 0.7})
+                    #fig_time.update_layout(yaxis_range=[-0.05, 1.05]) 
+                    #st.plotly_chart(fig_time, use_container_width=True)
+
                     fig_time.update_traces(marker={"size": 8, "opacity": 0.7})
                     fig_time.update_layout(yaxis_range=[-0.05, 1.05]) 
                     
+                    # Force x-axis ticks and grid lines to appear every 1 Month
+                    fig_time.update_xaxes(
+                        dtick="M1",              # Sets the interval to 1 Month
+                        tickformat="%b %Y",      # Formats the label cleanly (e.g., "Aug 2019")
+                        showgrid=True,           # Ensures the grid lines are drawn
+                        gridcolor="LightGray",   # Optional: Makes the grid lines visible but subtle
+                        tickangle=45             # Angles the text so the months don't overlap
+                    )
+                    
                     st.plotly_chart(fig_time, use_container_width=True)
+
+
                 else:
                     st.warning("No valid time data available for this target.")
 
