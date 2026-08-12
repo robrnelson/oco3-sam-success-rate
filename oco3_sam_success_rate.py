@@ -331,7 +331,7 @@ else:
                     #st.plotly_chart(fig_time, use_container_width=True)
 
                     fig_time.update_traces(marker={"size": 8, "opacity": 0.7})
-                    fig_time.update_layout(yaxis_range=[-0.05, 1.05], font={"size": 16}) 
+                    fig_time.update_layout(yaxis_range=[-0.05, 1.05], font={"size": 20}) 
                     
                     # Force x-axis ticks and grid lines to appear every 1 Month
                     fig_time.update_xaxes(
