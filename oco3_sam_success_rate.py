@@ -226,7 +226,8 @@ else:
                 )
             
             # Generate Map using the active dataset and styling
-            fig = px.scatter_mapbox(
+            #fig = px.scatter_mapbox(
+            fig = px.scatter_map(
                 filtered_df,
                 lat="latitude",
                 lon="longitude",
@@ -246,7 +247,8 @@ else:
                 range_color=selected_color_range,
                 zoom=1,
                 center={"lat": 0, "lon": 0},
-                mapbox_style='carto-positron',
+                #mapbox_style='carto-positron',
+                map_style='carto-positron',
                 title=active_title                        # <--- Uses CO2 or SIF title
             )
             
